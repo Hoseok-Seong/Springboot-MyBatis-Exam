@@ -25,6 +25,6 @@
     </delete>
 
     <update id="updateById">
-      update user_tb set password = #{password}, email = #{email} where username = #{username} 
+      update user_tb set password = #{password}, email = #{email} where id = #{id}
     </update>
 </mapper>

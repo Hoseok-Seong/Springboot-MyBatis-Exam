@@ -1,0 +1,33 @@
+.head{
+    display: flex;
+    justify-content: center;
+    background-color: aqua;
+}
+
+.nav{
+    display: flex;
+    justify-content: center;
+    background-color: aqua;
+}
+
+.body{
+    display: flex;
+    justify-content: center;
+}
+
+.footer{
+    display: flex;
+    justify-content: center;
+    background-color: aqua;
+}
+
+ul{
+    list-style: none;
+    display: flex;
+    justify-content: center;
+}
+
+li{
+    margin: 10px;
+    padding: 10px;
+}

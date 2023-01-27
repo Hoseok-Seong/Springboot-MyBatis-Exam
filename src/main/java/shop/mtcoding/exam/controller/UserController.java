@@ -8,9 +8,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import shop.mtcoding.exam.model.User;
 import shop.mtcoding.exam.model.UserRepository;
+import shop.mtcoding.exam.util.Script;
 
 @Controller
 public class UserController {
@@ -21,22 +23,26 @@ public class UserController {
     @Autowired
     private HttpSession session;
 
-    @GetMapping({ "/", "/joinForm" })
+    @GetMapping("/joinForm")
     public String joinForm() {
         return "user/joinForm";
     }
 
     @PostMapping("/join")
+    @ResponseBody
     public String join(String username, String password, String email) {
-        int result = userRepository.insert(username, password, email);
-        if (result == 1) {
-            return "redirect:/loginForm";
-        } else {
-            return "redirect:/joinForm";
+        try {
+            int result = userRepository.insert(username, password, email);
+            if (result != 1) {
+                return Script.back("회원가입실패");
+            }
+        } catch (Exception e) {
+            return Script.back("회원가입실패");
         }
+        return Script.path("/loginForm");
     }
 
-    @GetMapping("/loginForm")
+    @GetMapping({ "/", "/loginForm" })
     public String loginForm() {
         return "user/loginForm";
     }
@@ -50,10 +56,6 @@ public class UserController {
 
         session.setAttribute("principal", user);
 
-        // model.addAttribute("userId", user.getId());
-        // session.setAttribute("userId", user.getId());
-
-        // return "board/list";
         return "redirect:/board";
     }
 
@@ -64,22 +66,50 @@ public class UserController {
     }
 
     @GetMapping("/updateForm")
-    public String updateForm() {
-        return "user/updateForm";
-    }
-
-    @PostMapping("/update")
-    public String update(String password, String email) {
+    public String updateForm(Model model) {
         User principal = (User) session.getAttribute("principal");
         if (principal == null) {
             return "redirect:/notfound";
         }
 
-        int result = userRepository.updateById(principal.getUsername(), password, email);
+        User user = userRepository.findById(principal.getId());
+        model.addAttribute("user", user);
+        return "user/updateForm";
+    }
 
-        if (result == -1) {
+    @PostMapping("{id}/update")
+    public String update(@PathVariable int id, String password, String email) {
+        // 유효성 검사
+        if (password == null || password.isEmpty()) {
             return "redirect:/notfound";
         }
+
+        if (email == null || email.isEmpty()) {
+            return "redirect:/notfound";
+        }
+
+        // 인증
+        User principal = (User) session.getAttribute("principal");
+        if (principal == null) {
+            return "redirect:/notfound";
+        }
+
+        // 권한 체크
+        if (principal.getId() != id) {
+            return "redirect:/notfound";
+        }
+
+        // 업데이트
+
+        int result = userRepository.updateById(id, password, email);
+
+        if (result != 1) {
+            return "redirect:/notfound";
+        }
+
+        // 세션 동기화
+        User user = userRepository.findById(id);
+        session.setAttribute("principal", user);
 
         return "redirect:/logout";
     }
